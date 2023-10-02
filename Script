@@ -46,7 +46,7 @@ local utilities = { };
 
 function utilities:toggle_door_collision(door, toggle)
     for index, child in next, door.Model:GetChildren() do 
-        if child:IsA("BasePart") then 
+        if child:IsA("Basepart") then 
             child.CanCollide = toggle;
         end; 
     end;
@@ -59,14 +59,14 @@ function utilities:get_nearest_vehicle(tried) -- unoptimized
     local distance = math.huge;
 
     for index, action in next, dependencies.modules.ui.CircleAction.Specs do -- all of the interations
-        if action.Name == "Enter Driver" or action.Name == "Hijack" and action.IsVehicle and action.Enabled == true then -- if the interaction is to enter the driver seat of a vehicle
+        if action.Name == "Enter Driver" or action.Name == "Hijack" and action.IsVehicle then -- if the interaction is to enter the driver seat of a vehicle
             local vehicle = action.ValidRoot;
 
             if not table.find(tried, vehicle) and workspace.VehicleSpawns:FindFirstChild(vehicle.Name) then
                 if vehicle:FindFirstChild("Seat") then
                 if vehicle.Name == "Heli" and not dependencies.unsupported_vehicles[vehicle.Name] and (dependencies.modules.store._state.garageOwned.Vehicles[vehicle.Name] or dependencies.free_vehicles[vehicle.Name]) and not vehicle.Seat.Player.Value and vehicle:GetAttribute("Locked") == false then -- check if the vehicle is supported, owned and not already occupied
                     if not workspace:Raycast(vehicle.Seat.Position, dependencies.variables.up_vector, dependencies.variables.raycast_params) then
-                        local magnitude = (vehicle.Seat.Position - player.Character.HumanoidRootPart.Position).Magnitude; 
+                        local magnitude = (vehicle.Seat.Position - player.Character.HumanoidRootpart.Position).Magnitude; 
 
                         if magnitude < distance then 
                             distance = magnitude;
@@ -86,34 +86,37 @@ end;
 
 
 function movement:move_to_position(part, cframe, speed, car, target_vehicle, tried_vehicles)
+
     local vector_position = cframe.Position;
-local y_level = 400;
+  
+    local Speed = speed
+    local y_level = 500;
     local higher_position = Vector3.new(vector_position.X, y_level, vector_position.Z); -- 500 studs above target position
+ local start = part.CFrame
+ local distance = (cframe.p - start.p).magnitude
+task.spawn(function()
+if TeleportUp ~= nil then
+ repeat
+     Speed = car == true and dependencies.variables.vehicle_speed or dependencies.variables.player_speed
+part.CFrame = CFrame.new(part.CFrame.X, y_level, part.CFrame.Z)
+part.Velocity = Vector3.new()
 
-    repeat -- use velocity to move towards the target position
-        local velocity_unit = (higher_position - part.Position).Unit * speed;
-        part.Velocity = Vector3.new(velocity_unit.X, 0, velocity_unit.Z);
-
-        task.wait();
-
-        part.CFrame = CFrame.new(part.CFrame.X, y_level, part.CFrame.Z);
-
-        if target_vehicle and target_vehicle:FindFirstChild("Seat") and target_vehicle.Seat.Player.Value then -- if someone occupies the vehicle while we're moving to it, we need to move to the next vehicle
-            table.insert(tried_vehicles, target_vehicle);
-
-            local nearest_vehicle = utilities:get_nearest_vehicle(tried_vehicles);
-            local vehicle_object = nearest_vehicle and nearest_vehicle.ValidRoot;
-
-            if vehicle_object then 
-                movement:move_to_position(player.Character.HumanoidRootPart, vehicle_object.Seat.CFrame, 135, false, vehicle_object);
-            end;
-
-            return;
-        end;
-    until (part.Position - higher_position).Magnitude < 10;
-
-    part.CFrame = CFrame.new(part.Position.X, vector_position.Y, part.Position.Z);
-    part.Velocity = Vector3.zero;
+task.wait()
+    until (part.Position - higher_position).Magnitude < 15
+	    part:PivotTo(CFrame.new(part.Position.X, vector_position.Y, part.Position.Z))
+    part.Velocity = Vector3.zero
+end
+end)
+ for i = 0, 1, (Speed / distance) * 1 / 45 do
+     if not part:FindFirstChild('Seat') or (part:FindFirstChild("Seat") and part.Seat.PlayerName.Value == user.Name) then
+   local new_position = start:lerp(cframe, i)
+   part:PivotTo(new_position)
+   part.CFrame = CFrame.new(part.CFrame.X, y_level, part.CFrame.Z)
+part.Velocity = Vector3.new()
+   task.wait(1 / 45)
+   end
+ end
+ part:PivotTo(CFrame.new(part.Position.X, vector_position.Y, part.Position.Z))
 end;
 
 --// raycast filter
@@ -140,7 +143,7 @@ for index, vehicle_data in next, dependencies.modules.vehicle_data do
         dependencies.motorcycles[vehicle_data.Make] = true;
     end;
 
-    if vehicle_data.Type ~= "Chassis" and vehicle_data.Type ~= "Motorcycle" and vehicle_data.Type ~= "DuneBuggy" and vehicle_data.Make ~= "Volt" then -- weird vehicles that are not supported
+    if vehicle_data.Type ~= "Chassis" and vehicle_data.Type ~= "Motorcycle" and vehicle_data.Type ~= "Heli" and vehicle_data.Type ~= "DuneBuggy" and vehicle_data.Make ~= "Volt" then -- weird vehicles that are not supported
         dependencies.unsupported_vehicles[vehicle_data.Make] = true;
     end;
     
@@ -155,7 +158,7 @@ for index, value in next, workspace:GetDescendants() do
     if value.Name:sub(-4, -1) == "Door" and not value:IsDescendantOf(workspace:WaitForChild("MansionRobbery", 25)) then 
         local touch_part = value:FindFirstChild("Touch");
 
-        if touch_part and touch_part:IsA("BasePart") then
+        if touch_part and touch_part:IsA("Basepart") then
             for distance = 5, 100, 5 do 
                 local forward_position, backward_position = touch_part.Position + touch_part.CFrame.LookVector * (distance + 3), touch_part.Position + touch_part.CFrame.LookVector * -(distance + 3); -- distance + 3 studs forward and backward from the door
                 
@@ -199,20 +202,32 @@ end
 
 task.spawn(function()
     while task.wait() do
-        if dependencies.variables.stopVelocity and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            player.Character.HumanoidRootPart.Velocity = Vector3.zero;
+        if dependencies.variables.stopVelocity and player.Character and player.Character:FindFirstChild("HumanoidRootpart") then
+            player.Character.HumanoidRootpart.Velocity = Vector3.zero;
         end;
     end;
 end);
 
 --// main teleport function (not returning a new function directly because of recursion)
 
-local function teleport(cframe, tried) -- unoptimized
-    local relative_position = (cframe.Position - player.Character.HumanoidRootPart.Position);
+function dependencies:teleport(cframe, tried) -- unoptimized
+for _, v in pairs(game:GetService("Workspace").Vehicles:GetChildren()) do
+if v:FindFirstChild('_VehicleState_'..game:GetService('Players').LocalPlayer.Name) then
+if v.Name == "Heli" then
+movement:move_to_position(v.PrimaryPart, cframe, dependencies.variables.vehicle_speed);
+else
+repeat
+                task.wait(0.15)
+                require(game:GetService("ReplicatedStorage").Game.CharacterUtil).OnJump()
+until not v:FindFirstChild('Seat') or not v.Seat:FindFirstChild("part") or v.Seat.PlayerName.Value ~= user.Name
+end
+end
+end
+    local relative_position = (cframe.Position - player.Character.HumanoidRootpart.Position);
     local target_distance = relative_position.Magnitude;
 
-    if target_distance <= 20 and not workspace:Raycast(player.Character.HumanoidRootPart.Position, relative_position.Unit * target_distance, dependencies.variables.raycast_params) then 
-        player.Character.HumanoidRootPart.CFrame = cframe; 
+    if target_distance <= 20 and not workspace:Raycast(player.Character.HumanoidRootpart.Position, relative_position.Unit * target_distance, dependencies.variables.raycast_params) then 
+        player.Character.HumanoidRootpart.CFrame = cframe; 
         
         return;
     end; 
@@ -224,19 +239,19 @@ local function teleport(cframe, tried) -- unoptimized
     dependencies.variables.teleporting = true;
 
     if vehicle_object and vehicle_object:FindFirstChild("Seat") then
-        local vehicle_distance = (vehicle_object.Seat.Position - player.Character.HumanoidRootPart.Position).Magnitude;
-    
+        local vehicle_distance = (vehicle_object.Seat.Position - player.Character.HumanoidRootpart.Position).Magnitude;
+  
             if vehicle_object:FindFirstChild("Seat") and vehicle_object.Seat.PlayerName.Value ~= player.Name then
-                movement:move_to_position(player.Character.HumanoidRootPart, vehicle_object.Seat.CFrame, dependencies.variables.player_speed, false, vehicle_object, tried);
+                movement:move_to_position(player.Character.HumanoidRootpart, vehicle_object.Seat.CFrame, dependencies.variables.player_speed, false, vehicle_object, tried);
 local UI = require(game:GetService("ReplicatedStorage").Module:WaitForChild("UI"));
         for i,v in pairs (UI.CircleAction.Specs) do
             if v.Name == "Hijack" then
-                if v.Part.Parent.Name == "Heli" then
+                if v.part.Parent.Name == "Heli" then
                     v.Duration = 0
                     v.Timed = true
                     v:Callback(v, true)
                 end
-         
+            end
         end
 
                 dependencies.variables.stopVelocity = true;
@@ -256,22 +271,14 @@ local UI = require(game:GetService("ReplicatedStorage").Module:WaitForChild("UI"
                 if vehicle_object:FindFirstChild("Seat") and vehicle_object.Seat.PlayerName.Value ~= player.Name then -- if it failed to enter, try a new car
                     table.insert(tried, vehicle_object);
 
-                    return teleport(cframe, tried or { vehicle_object });
+                    return dependencies:teleport(cframe, tried or { vehicle_object });
                 end;
             end;
 
-            movement:move_to_position(vehicle_object.Engine, cframe, dependencies.variables.vehicle_speed, true);
- repeat -- attempt to exit car
-                task.wait(0.15);
-                dependencies.modules.character_util.OnJump();
-            until vehicle_object.Seat.PlayerName.Value ~= player.Name;
-        end;
-    else
-        movement:move_to_position(player.Character.HumanoidRootPart, cframe, dependencies.variables.player_speed);
+            movement:move_to_position(vehicle_object.PrimaryPart, cframe, dependencies.variables.vehicle_speed, true);
     end;
 
     task.wait(0.5);
     dependencies.variables.teleporting = false;
 end;
-
-return teleport;
+return dependencies
