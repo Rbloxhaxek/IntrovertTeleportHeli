@@ -8,7 +8,8 @@ end
 --// services
 
 local replicated_storage = game:GetService("ReplicatedStorage");
-local run_service = game:GetService("RunService");local players = game:GetService("Players");
+local run_service = game:GetService("RunService");
+local players = game:GetService("Players");
 local tween_service = game:GetService("TweenService");
 
 --// variables
@@ -66,7 +67,7 @@ function utilities:get_nearest_vehicle(tried) -- unoptimized
                 if vehicle:FindFirstChild("Seat") then
                 if vehicle.Name == "Heli" and not dependencies.unsupported_vehicles[vehicle.Name] and (dependencies.modules.store._state.garageOwned.Vehicles[vehicle.Name] or dependencies.free_vehicles[vehicle.Name]) and not vehicle.Seat.Player.Value and vehicle:GetAttribute("Locked") == false then -- check if the vehicle is supported, owned and not already occupied
                     if not workspace:Raycast(vehicle.Seat.Position, dependencies.variables.up_vector, dependencies.variables.raycast_params) then
-                        local magnitude = (vehicle.Seat.Position - player.Character.HumanoidRootpart.Position).Magnitude; 
+                        local magnitude = (vehicle.Seat.Position - player.Character.HumanoidRootPart.Position).Magnitude; 
 
                         if magnitude < distance then 
                             distance = magnitude;
@@ -202,8 +203,8 @@ end
 
 task.spawn(function()
     while task.wait() do
-        if dependencies.variables.stopVelocity and player.Character and player.Character:FindFirstChild("HumanoidRootpart") then
-            player.Character.HumanoidRootpart.Velocity = Vector3.zero;
+        if dependencies.variables.stopVelocity and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            player.Character.HumanoidRootPart.Velocity = Vector3.zero;
         end;
     end;
 end);
@@ -223,11 +224,11 @@ until not v:FindFirstChild('Seat') or not v.Seat:FindFirstChild("part") or v.Sea
 end
 end
 end
-    local relative_position = (cframe.Position - player.Character.HumanoidRootpart.Position);
+    local relative_position = (cframe.Position - player.Character.HumanoidRootPart.Position);
     local target_distance = relative_position.Magnitude;
 
-    if target_distance <= 20 and not workspace:Raycast(player.Character.HumanoidRootpart.Position, relative_position.Unit * target_distance, dependencies.variables.raycast_params) then 
-        player.Character.HumanoidRootpart.CFrame = cframe; 
+    if target_distance <= 20 and not workspace:Raycast(player.Character.HumanoidRootPart.Position, relative_position.Unit * target_distance, dependencies.variables.raycast_params) then 
+        player.Character.HumanoidRootPart.CFrame = cframe; 
         
         return;
     end; 
@@ -239,10 +240,10 @@ end
     dependencies.variables.teleporting = true;
 
     if vehicle_object and vehicle_object:FindFirstChild("Seat") then
-        local vehicle_distance = (vehicle_object.Seat.Position - player.Character.HumanoidRootpart.Position).Magnitude;
+        local vehicle_distance = (vehicle_object.Seat.Position - player.Character.HumanoidRootPart.Position).Magnitude;
   
             if vehicle_object:FindFirstChild("Seat") and vehicle_object.Seat.PlayerName.Value ~= player.Name then
-                movement:move_to_position(player.Character.HumanoidRootpart, vehicle_object.Seat.CFrame, dependencies.variables.player_speed, false, vehicle_object, tried);
+                movement:move_to_position(player.Character.HumanoidRootPart, vehicle_object.Seat.CFrame, dependencies.variables.player_speed, false, vehicle_object, tried);
 local UI = require(game:GetService("ReplicatedStorage").Module:WaitForChild("UI"));
         for i,v in pairs (UI.CircleAction.Specs) do
             if v.Name == "Hijack" then
