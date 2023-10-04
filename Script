@@ -1,10 +1,3 @@
-wait(0.01)
-for i,v in pairs(game:GetService("Workspace").Vehicles:GetDescendants()) do
-if v:IsA("Sound") then
-v:Destroy()
-end
-end
-
 --// services
 
 local replicated_storage = game:GetService("ReplicatedStorage");
@@ -247,7 +240,7 @@ end
 local UI = require(game:GetService("ReplicatedStorage").Module:WaitForChild("UI"));
         for i,v in pairs (UI.CircleAction.Specs) do
             if v.Name == "Hijack" then
-                if v.part.Parent.Name == "Heli" then
+                if v.ValidRoot.Name == "Heli" then
                     v.Duration = 0
                     v.Timed = true
                     v:Callback(v, true)
